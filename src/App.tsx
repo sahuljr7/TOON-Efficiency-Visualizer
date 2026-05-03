@@ -20,6 +20,7 @@ export default function App() {
   const [jsonInput, setJsonInput] = useState(JSON.stringify(SAMPLE_DATASETS[0].data, null, 2));
   const [toonOutput, setToonOutput] = useState('');
   const [warning, setWarning] = useState<string | undefined>(undefined);
+  const [activeTab, setActiveTab] = useState<'input' | 'output' | 'insights'>('input');
   
   const stats = useMemo(() => {
     const result = jsonToToon(jsonInput);
@@ -39,7 +40,6 @@ export default function App() {
       reader.onload = (event) => {
         const text = event.target?.result as string;
         try {
-          // Validate JSON
           JSON.parse(text);
           setJsonInput(text);
         } catch (err) {
@@ -54,83 +54,98 @@ export default function App() {
     <div className="min-h-screen bg-bg text-ink font-sans selection:bg-accent/20">
       <div className="dashboard-grid">
         {/* Header Cell */}
-        <div className="cell col-span-3 bg-ink text-white flex-row items-center justify-between px-6 py-0 h-16">
-          <div className="flex items-center space-x-3">
+        <div className="cell col-span-1 lg:col-span-3 bg-ink text-white flex-row items-center justify-between px-4 md:px-6 py-0 min-h-16 h-auto md:h-16 sticky top-0 z-50">
+          <div className="flex items-center space-x-3 py-3 md:py-0">
             <div className="bg-accent p-1.5 rounded">
               <Cpu className="w-5 h-5 text-ink" />
             </div>
-            <div className="text-lg font-bold tracking-tight">
-              <span>TOON</span> <span className="opacity-40 font-mono text-sm ml-2">v1.2 // Token-Oriented Object Notation</span>
+            <div className="text-base md:text-lg font-bold tracking-tight">
+              <span>TOON</span> <span className="opacity-40 font-mono text-[10px] md:text-xs ml-1 md:ml-2">v1.2 // Optimized</span>
             </div>
           </div>
-          <div className="flex items-center gap-6 text-[13px] font-medium">
-            <div className="hidden md:block">Schema Extraction: <b className="text-accent">ENABLED</b></div>
-            <div className="hidden md:block">Efficiency: <b className="text-accent">+{stats.reduction}%</b></div>
+          <div className="flex items-center gap-2 md:gap-6 text-[11px] md:text-[13px] font-medium py-3 md:py-0">
+            <div className="hidden lg:block">Schema Extraction: <b className="text-accent">ENABLED</b></div>
+            <div className="hidden lg:block">Efficiency: <b className="text-accent">+{stats.reduction}%</b></div>
             <button 
-              className="bg-accent text-ink px-4 py-1.5 rounded font-bold hover:bg-accent/90 transition-all flex items-center space-x-2"
+              className="bg-accent text-ink px-3 md:px-4 py-1.5 rounded font-bold hover:bg-accent/90 transition-all flex items-center space-x-2 shadow-lg shadow-accent/20 active:scale-95"
               onClick={() => navigator.clipboard.writeText(toonOutput)}
             >
               <Copy className="w-3.5 h-3.5" />
-              <span>Copy TOON</span>
+              <span className="hidden sm:inline">Copy TOON</span>
             </button>
           </div>
         </div>
 
+        {/* Mobile Tabs */}
+        <div className="lg:hidden bg-white border-b border-border flex sticky top-16 z-40 overflow-x-auto scrollbar-hide">
+          {(['input', 'output', 'insights'] as const).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`flex-1 min-w-[100px] py-4 text-[10px] font-bold uppercase tracking-widest transition-all border-b-2 ${
+                activeTab === tab ? 'border-accent text-accent bg-accent/5' : 'border-transparent text-gray-400'
+              }`}
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
+
         {/* Input Cell */}
-        <div className="cell border-r border-border">
+        <div className={`cell border-r border-border ${activeTab !== 'input' ? 'hidden lg:flex' : 'flex'}`}>
           <div className="panel-label">
             <span>JSON Raw Input</span>
             <span className="badge bg-ink text-white px-2 py-0.5 rounded text-[10px]">
-              {jsonInput.length} Characters
+              {jsonInput.length} Chars
             </span>
           </div>
-          <div className="flex flex-wrap gap-2 mb-4">
+          <div className="flex flex-wrap gap-2 mb-4 overflow-x-auto pb-1 scrollbar-hide">
             {SAMPLE_DATASETS.map((set) => (
               <button
                 key={set.name}
                 onClick={() => handleSampleClick(set.data)}
-                className="px-2 py-1 bg-gray-100 border border-border rounded text-[10px] font-bold uppercase tracking-wider hover:bg-white hover:border-accent transition-all"
+                className="px-2 py-1 bg-gray-100 border border-border rounded text-[9px] md:text-[10px] font-bold uppercase tracking-wider hover:bg-white hover:border-accent transition-all whitespace-nowrap"
               >
                 {set.name}
               </button>
             ))}
             <div className="ml-auto flex gap-2">
-              <label className="cursor-pointer bg-gray-100 border border-border p-1.5 rounded hover:bg-white transition-colors">
+              <label className="cursor-pointer bg-gray-100 border border-border p-1.5 rounded hover:bg-white transition-colors active:bg-blue-50">
                 <Upload className="w-3.5 h-3.5 text-gray-500" />
                 <input type="file" className="hidden" accept=".json" onChange={handleFileUpload} />
               </label>
               <button 
                 onClick={() => setJsonInput('')}
-                className="bg-gray-100 border border-border p-1.5 rounded hover:bg-red-50 hover:border-red-200 transition-colors"
+                className="bg-gray-100 border border-border p-1.5 rounded hover:bg-red-50 hover:border-red-200 transition-colors active:bg-red-100"
               >
                 <Trash2 className="w-3.5 h-3.5 text-gray-500" />
               </button>
             </div>
           </div>
-          <div className="relative flex-grow">
+          <div className="relative h-full min-h-[350px] lg:min-h-0">
             <textarea
               value={jsonInput}
               onChange={(e) => setJsonInput(e.target.value)}
-              className="w-full h-full p-4 bg-[#F1F5F9] border border-border rounded-md font-mono text-[12px] leading-relaxed outline-none focus:ring-1 focus:ring-accent transition-all resize-none overflow-auto"
+              className="w-full h-full p-4 bg-[#F1F5F9] border border-border rounded-md font-mono text-[12px] leading-relaxed outline-none focus:ring-1 focus:ring-accent transition-all resize-none md:resize-y overflow-auto"
               placeholder="Paste JSON..."
             />
           </div>
         </div>
 
         {/* Output Cell */}
-        <div className="cell border-r border-border bg-[#FAFAFA]">
+        <div className={`cell border-r border-border bg-[#FAFAFA] ${activeTab !== 'output' ? 'hidden lg:flex' : 'flex'}`}>
           <div className="panel-label">
             <span>TOON Optimized Output</span>
             <span className="badge bg-accent text-ink px-2 py-0.5 rounded text-[10px]">
-              {toonOutput.length} Characters
+              {toonOutput.length} Chars
             </span>
           </div>
           
-          <div className="flex-grow flex flex-col space-y-4 overflow-hidden">
+          <div className="flex-grow flex flex-col space-y-4 overflow-hidden min-h-[350px] lg:min-h-0">
             <VisualComparison json={jsonInput} toon={toonOutput} isDashboard />
           </div>
 
-          <div className="mt-4 pt-4 border-t border-dashed border-border">
+          <div className="mt-4 pt-4 border-t border-dashed border-border lg:block hidden">
             <div className="panel-label !mb-2">High-Density Signal</div>
             <div className="flex flex-wrap gap-1.5">
               {Array.from({ length: 40 }).map((_, i) => (
@@ -147,70 +162,73 @@ export default function App() {
           </div>
         </div>
 
-        {/* Sidebar Cell */}
-        <div className="cell">
+        {/* Sidebar Cell / Analysis */}
+        <div className={`cell ${activeTab !== 'insights' ? 'hidden lg:flex' : 'flex'}`}>
           <div className="panel-label">Token Analysis</div>
           
-          <div className="space-y-4 mb-8">
-            <div className="p-4 border border-border rounded-lg bg-white shadow-sm">
-              <div className="text-[11px] text-gray-500 font-bold uppercase mb-1">JSON Tokens</div>
-              <div className="text-2xl font-bold font-mono text-danger">{stats.jsonTokens}</div>
-            </div>
-            
-            <div className="p-4 border border-border rounded-lg bg-white shadow-sm">
-              <div className="text-[11px] text-gray-500 font-bold uppercase mb-1">TOON Tokens</div>
-              <div className="text-2xl font-bold font-mono text-accent">{stats.toonTokens}</div>
+          <div className="space-y-3 md:space-y-4 mb-6 md:mb-8">
+            <div className="grid grid-cols-2 lg:grid-cols-1 gap-3">
+              <div className="p-3 md:p-4 border border-border rounded-lg bg-white shadow-sm">
+                <div className="text-[10px] md:text-[11px] text-gray-500 font-bold uppercase mb-1">JSON Tokens</div>
+                <div className="text-xl md:text-2xl font-bold font-mono text-danger tracking-tight">{stats.jsonTokens}</div>
+              </div>
+              
+              <div className="p-3 md:p-4 border border-border rounded-lg bg-white shadow-sm">
+                <div className="text-[10px] md:text-[11px] text-gray-500 font-bold uppercase mb-1">TOON Tokens</div>
+                <div className="text-xl md:text-2xl font-bold font-mono text-accent tracking-tight">{stats.toonTokens}</div>
+              </div>
             </div>
 
-            <div className="p-5 bg-ink text-white rounded-lg border-none">
-              <div className="text-[11px] text-gray-400 font-bold uppercase mb-1">Context Window Saving</div>
-              <div className="text-3xl font-bold font-mono text-white mb-2">{stats.reduction}%</div>
+            <div className="p-4 md:p-5 bg-ink text-white rounded-lg border-none shadow-xl shadow-ink/20 transform hover:scale-[1.01] transition-transform">
+              <div className="text-[10px] md:text-[11px] text-gray-400 font-bold uppercase mb-1">Inference Savings</div>
+              <div className="text-2xl md:text-3xl font-bold font-mono text-white mb-2">{stats.reduction}%</div>
               <div className="h-2 w-full bg-white/10 rounded-full overflow-hidden">
                 <motion.div 
                   initial={{ width: 0 }}
                   animate={{ width: `${stats.reduction}%` }}
+                  transition={{ type: 'spring', stiffness: 50, damping: 15 }}
                   className="h-full bg-accent"
                 />
               </div>
             </div>
           </div>
 
-          <div className="flex-grow">
+          <div className="flex-grow min-h-[250px] lg:min-h-0">
             <div className="panel-label">Visual Logic Map</div>
-            <div className="h-48">
+            <div className="h-48 md:h-64 lg:h-auto lg:max-h-64">
               <EfficiencyChart jsonTokens={stats.jsonTokens} toonTokens={stats.toonTokens} />
             </div>
           </div>
 
-          <div className="mt-auto pt-6 border-t border-border">
+          <div className="mt-4 pt-4 lg:pt-6 border-t border-border lg:block hidden">
             <div className="panel-label">LLM Advantages</div>
-            <ul className="space-y-2 text-[11px] font-medium text-slate-600">
+            <ul className="space-y-2 text-[10px] md:text-[11px] font-medium text-slate-600">
               <li className="flex items-center gap-2">
                 <div className="w-1 h-1 bg-accent rounded-full" /> Reduces KV cache pressure
               </li>
               <li className="flex items-center gap-2">
-                <div className="w-1 h-1 bg-accent rounded-full" /> Faster TTFT (Time to First Token)
+                <div className="w-1 h-1 bg-accent rounded-full" /> Faster TTFT (Generation Speed)
               </li>
               <li className="flex items-center gap-2">
-                <div className="w-1 h-1 bg-accent rounded-full" /> Lower API cost per generation
+                <div className="w-1 h-1 bg-accent rounded-full" /> Lower API cost per request
               </li>
               <li className="flex items-center gap-2">
-                <div className="w-1 h-1 bg-accent rounded-full" /> Less noise for Attention heads
+                <div className="w-1 h-1 bg-accent rounded-full" /> Less noise for Attention logic
               </li>
             </ul>
           </div>
         </div>
 
         {/* Info/Educate Row */}
-        <div className="cell col-span-3 flex-row gap-12 bg-ink text-white py-8 px-12 border-t border-white/5">
-          <div className="max-w-md">
+        <div className="cell col-span-1 lg:col-span-3 flex-col lg:flex-row gap-8 md:gap-12 bg-ink text-white py-8 md:py-10 px-6 md:px-12 border-t border-white/5 order-last lg:order-none">
+          <div className="max-w-md w-full">
             <div className="panel-label !text-accent !mb-2 opacity-100">Educational Context</div>
-            <p className="text-[12px] opacity-70 leading-relaxed font-medium">
-              LLMs process text as numbers. Standard JSON format forces the model to attend to quotes and braces repeatedly. TOON extracts schema logic into a single header, allowing the model to focus purely on the data variation.
+            <p className="text-[11px] md:text-[12px] opacity-70 leading-relaxed font-medium">
+              Large Language Models process text as discrete numeric representations. Format overhead in JSON forces the model to attend to repeated structural markers. TOON extracts schema logic once, allowing the model to focus purely on relevant data variation.
             </p>
           </div>
           
-          <div className="flex-grow grid grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="flex-grow grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 pb-4 lg:pb-0">
             <EducationalSection isDashboard />
           </div>
 
@@ -218,7 +236,7 @@ export default function App() {
              <div className="font-mono text-[10px] opacity-30 leading-tight">
                ARCH: TRANSFORMER-OPTIMIZED<br/>
                VER: 2026.05.03<br/>
-               SPEC: V1.2.0-STABLE
+               ENV: PROD-STABLE
              </div>
           </div>
         </div>

@@ -18,15 +18,21 @@
 
 .dashboard-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr 300px;
-  grid-template-rows: 64px 1fr auto;
+  grid-template-columns: 1fr;
   min-height: 100vh;
   gap: 1px;
   @apply bg-border;
 }
 
+@media (min-width: 1024px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr 1fr 320px;
+    grid-template-rows: 64px 1fr auto;
+  }
+}
+
 .cell {
-  @apply bg-white p-5 overflow-hidden flex flex-col;
+  @apply bg-white p-4 md:p-6 overflow-hidden flex flex-col;
 }
 
 .panel-label {
