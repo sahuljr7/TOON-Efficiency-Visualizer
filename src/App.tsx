@@ -1,4 +1,4 @@
-import { useState, useMemo, ChangeEvent } from 'react';
+import { useState, useMemo, ChangeEvent, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   BarChart3, 
@@ -7,6 +7,7 @@ import {
   Upload, 
   Trash2, 
   Copy,
+  Check,
   Terminal,
   Cpu
 } from 'lucide-react';
@@ -17,10 +18,33 @@ import EfficiencyChart from './components/EfficiencyChart';
 import EducationalSection from './components/EducationalSection';
 
 export default function App() {
-  const [jsonInput, setJsonInput] = useState(JSON.stringify(SAMPLE_DATASETS[0].data, null, 2));
+  const [jsonInput, setJsonInput] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    const encodedJson = params.get('json');
+    if (encodedJson) {
+      try {
+        return decodeURIComponent(encodedJson);
+      } catch (err) {
+        return JSON.stringify(SAMPLE_DATASETS[0].data, null, 2);
+      }
+    }
+    return JSON.stringify(SAMPLE_DATASETS[0].data, null, 2);
+  });
+
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    if (jsonInput) {
+      url.searchParams.set('json', encodeURIComponent(jsonInput));
+    } else {
+      url.searchParams.delete('json');
+    }
+    window.history.replaceState({}, '', url);
+  }, [jsonInput]);
+
   const [toonOutput, setToonOutput] = useState('');
   const [warning, setWarning] = useState<string | undefined>(undefined);
   const [activeTab, setActiveTab] = useState<'input' | 'output' | 'insights'>('input');
+  const [copiedToon, setCopiedToon] = useState(false);
   
   const stats = useMemo(() => {
     const result = jsonToToon(jsonInput);
@@ -31,6 +55,13 @@ export default function App() {
 
   const handleSampleClick = (data: any) => {
     setJsonInput(JSON.stringify(data, null, 2));
+  };
+
+  const handleCopy = () => {
+    if (!toonOutput) return;
+    navigator.clipboard.writeText(toonOutput);
+    setCopiedToon(true);
+    setTimeout(() => setCopiedToon(false), 2000);
   };
 
   const handleFileUpload = (e: ChangeEvent<HTMLInputElement>) => {
@@ -67,11 +98,13 @@ export default function App() {
             <div className="hidden lg:block">Schema Extraction: <b className="text-accent">ENABLED</b></div>
             <div className="hidden lg:block">Efficiency: <b className="text-accent">+{stats.reduction}%</b></div>
             <button 
-              className="bg-accent text-ink px-3 md:px-4 py-1.5 rounded font-bold hover:bg-accent/90 transition-all flex items-center space-x-2 shadow-lg shadow-accent/20 active:scale-95"
-              onClick={() => navigator.clipboard.writeText(toonOutput)}
+              className={`px-3 md:px-4 py-1.5 rounded font-bold transition-all flex items-center space-x-2 shadow-lg active:scale-95 ${
+                copiedToon ? 'bg-white text-accent' : 'bg-accent text-ink shadow-accent/20 hover:bg-accent/90'
+              }`}
+              onClick={handleCopy}
             >
-              <Copy className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Copy TOON</span>
+              {copiedToon ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+              <span className="hidden sm:inline">{copiedToon ? 'Copied' : 'Copy TOON'}</span>
             </button>
           </div>
         </div>
@@ -136,9 +169,20 @@ export default function App() {
         <div className={`cell border-r border-border bg-[#FAFAFA] ${activeTab !== 'output' ? 'hidden lg:flex' : 'flex'}`}>
           <div className="panel-label">
             <span>TOON Optimized Output</span>
-            <span className="badge bg-accent text-ink px-2 py-0.5 rounded text-[10px]">
-              {toonOutput.length} Chars
-            </span>
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={handleCopy}
+                className={`flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-bold transition-all ${
+                  copiedToon ? 'bg-accent text-ink' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                }`}
+              >
+                {copiedToon ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                {copiedToon ? 'COPIED' : 'COPY'}
+              </button>
+              <span className="badge bg-accent text-ink px-2 py-0.5 rounded text-[10px]">
+                {toonOutput.length} Chars
+              </span>
+            </div>
           </div>
           
           <div className="flex-grow flex flex-col space-y-4 overflow-hidden min-h-[350px] lg:min-h-0">
