@@ -1,0 +1,6 @@
+{
+  "name": "TOON Efficiency Visualizer",
+  "description": "An interactive tool demonstrating why Token-Oriented Object Notation (TOON) is more efficient than JSON for LLM processing through token analysis and visual comparison.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
