@@ -2,8 +2,6 @@ import { useState, useMemo, ChangeEvent, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   BarChart3, 
-  ArrowRight, 
-  Info, 
   Upload, 
   Trash2, 
   Copy,
@@ -42,14 +40,12 @@ export default function App() {
   }, [jsonInput]);
 
   const [toonOutput, setToonOutput] = useState('');
-  const [warning, setWarning] = useState<string | undefined>(undefined);
   const [activeTab, setActiveTab] = useState<'input' | 'output' | 'insights'>('input');
   const [copiedToon, setCopiedToon] = useState(false);
   
   const stats = useMemo(() => {
     const result = jsonToToon(jsonInput);
     setToonOutput(result.toon);
-    setWarning(result.warning);
     return calculateStats(jsonInput, result.toon);
   }, [jsonInput]);
 
@@ -82,41 +78,54 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-bg text-ink font-sans selection:bg-accent/20">
-      <div className="dashboard-grid">
-        {/* Header Cell */}
-        <div className="cell col-span-1 lg:col-span-3 bg-ink text-white flex-row items-center justify-between px-4 md:px-6 py-0 min-h-16 h-auto md:h-16 sticky top-0 z-50">
-          <div className="flex items-center space-x-3 py-3 md:py-0">
-            <div className="bg-accent p-1.5 rounded">
-              <Cpu className="w-5 h-5 text-ink" />
+    <div className="dashboard-container selection:bg-accent/20">
+      {/* Header */}
+      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-border h-16 shrink-0">
+        <div className="max-w-[1600px] mx-auto h-full flex items-center justify-between px-4 md:px-8">
+          <div className="flex items-center gap-3">
+            <div className="bg-ink p-2 rounded-xl shadow-lg ring-1 ring-white/10">
+              <Cpu className="w-5 h-5 text-accent" />
             </div>
-            <div className="text-base md:text-lg font-bold tracking-tight">
-              <span>TOON</span> <span className="opacity-40 font-mono text-[10px] md:text-xs ml-1 md:ml-2">v1.2 // Optimized</span>
+            <div>
+              <h1 className="text-sm md:text-base font-black tracking-tight flex items-center gap-2">
+                TOON <span className="text-[10px] bg-slate-100 px-1.5 py-0.5 rounded text-slate-500 font-mono font-bold tracking-normal">STABLE // V1.2</span>
+              </h1>
+              <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wider hidden sm:block">Token-Oriented Object Notation</p>
             </div>
           </div>
-          <div className="flex items-center gap-2 md:gap-6 text-[11px] md:text-[13px] font-medium py-3 md:py-0">
-            <div className="hidden lg:block">Schema Extraction: <b className="text-accent">ENABLED</b></div>
-            <div className="hidden lg:block">Efficiency: <b className="text-accent">+{stats.reduction}%</b></div>
+
+          <div className="flex items-center gap-3">
+            <div className="hidden lg:flex items-center gap-6 px-6 py-2 bg-slate-50 rounded-full border border-border mr-2">
+              <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Efficiency: <span className="text-accent ml-1">+{stats.reduction}%</span></div>
+              <div className="w-px h-3 bg-border" />
+              <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">KV Cache: <span className="text-accent ml-1">OPTIMIZED</span></div>
+            </div>
+
             <button 
-              className={`px-3 md:px-4 py-1.5 rounded font-bold transition-all flex items-center space-x-2 shadow-lg active:scale-95 ${
-                copiedToon ? 'bg-white text-accent' : 'bg-accent text-ink shadow-accent/20 hover:bg-accent/90'
-              }`}
               onClick={handleCopy}
+              className={`h-10 px-5 rounded-xl font-bold text-xs transition-all flex items-center gap-2 active:scale-95 shadow-sm ${
+                copiedToon 
+                  ? 'bg-accent text-white shadow-accent/20' 
+                  : 'bg-ink text-white hover:bg-slate-800'
+              }`}
             >
-              {copiedToon ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-              <span className="hidden sm:inline">{copiedToon ? 'Copied' : 'Copy TOON'}</span>
+              {copiedToon ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+              <span className="hidden sm:inline">{copiedToon ? 'COPIED TO CLIPBOARD' : 'EXPORT TOON'}</span>
             </button>
           </div>
         </div>
+      </header>
 
-        {/* Mobile Tabs */}
-        <div className="lg:hidden bg-white border-b border-border flex sticky top-16 z-40 overflow-x-auto scrollbar-hide">
+      {/* Main Content */}
+      <main className="flex-grow p-4 md:p-8 max-w-[1600px] mx-auto w-full">
+        {/* Mobile Navigation Tabs */}
+        <div className="lg:hidden flex bg-white border border-border rounded-xl mb-4 overflow-hidden shadow-sm">
           {(['input', 'output', 'insights'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`flex-1 min-w-[100px] py-4 text-[10px] font-bold uppercase tracking-widest transition-all border-b-2 ${
-                activeTab === tab ? 'border-accent text-accent bg-accent/5' : 'border-transparent text-gray-400'
+              className={`flex-1 py-4 text-[10px] font-black uppercase tracking-[0.15em] transition-all border-b-2 ${
+                activeTab === tab ? 'border-accent text-accent bg-accent/5' : 'border-transparent text-slate-400 hover:bg-slate-50'
               }`}
             >
               {tab}
@@ -124,167 +133,214 @@ export default function App() {
           ))}
         </div>
 
-        {/* Input Cell */}
-        <div className={`cell border-r border-border ${activeTab !== 'input' ? 'hidden lg:flex' : 'flex'}`}>
-          <div className="panel-label">
-            <span>JSON Raw Input</span>
-            <span className="badge bg-ink text-white px-2 py-0.5 rounded text-[10px]">
-              {jsonInput.length} Chars
-            </span>
-          </div>
-          <div className="flex flex-wrap gap-2 mb-4 overflow-x-auto pb-1 scrollbar-hide">
-            {SAMPLE_DATASETS.map((set) => (
-              <button
-                key={set.name}
-                onClick={() => handleSampleClick(set.data)}
-                className="px-2 py-1 bg-gray-100 border border-border rounded text-[9px] md:text-[10px] font-bold uppercase tracking-wider hover:bg-white hover:border-accent transition-all whitespace-nowrap"
-              >
-                {set.name}
-              </button>
-            ))}
-            <div className="ml-auto flex gap-2">
-              <label className="cursor-pointer bg-gray-100 border border-border p-1.5 rounded hover:bg-white transition-colors active:bg-blue-50">
-                <Upload className="w-3.5 h-3.5 text-gray-500" />
-                <input type="file" className="hidden" accept=".json" onChange={handleFileUpload} />
-              </label>
-              <button 
-                onClick={() => setJsonInput('')}
-                className="bg-gray-100 border border-border p-1.5 rounded hover:bg-red-50 hover:border-red-200 transition-colors active:bg-red-100"
-              >
-                <Trash2 className="w-3.5 h-3.5 text-gray-500" />
-              </button>
-            </div>
-          </div>
-          <div className="relative h-full min-h-[350px] lg:min-h-0">
-            <textarea
-              value={jsonInput}
-              onChange={(e) => setJsonInput(e.target.value)}
-              className="w-full h-full p-4 bg-[#F1F5F9] border border-border rounded-md font-mono text-[12px] leading-relaxed outline-none focus:ring-1 focus:ring-accent transition-all resize-none md:resize-y overflow-auto"
-              placeholder="Paste JSON..."
-            />
-          </div>
-        </div>
-
-        {/* Output Cell */}
-        <div className={`cell border-r border-border bg-[#FAFAFA] ${activeTab !== 'output' ? 'hidden lg:flex' : 'flex'}`}>
-          <div className="panel-label">
-            <span>TOON Optimized Output</span>
-            <div className="flex items-center gap-2">
-              <button 
-                onClick={handleCopy}
-                className={`flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-bold transition-all ${
-                  copiedToon ? 'bg-accent text-ink' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
-                }`}
-              >
-                {copiedToon ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-                {copiedToon ? 'COPIED' : 'COPY'}
-              </button>
-              <span className="badge bg-accent text-ink px-2 py-0.5 rounded text-[10px]">
-                {toonOutput.length} Chars
-              </span>
-            </div>
-          </div>
-          
-          <div className="flex-grow flex flex-col space-y-4 overflow-hidden min-h-[350px] lg:min-h-0">
-            <VisualComparison json={jsonInput} toon={toonOutput} isDashboard />
-          </div>
-
-          <div className="mt-4 pt-4 border-t border-dashed border-border lg:block hidden">
-            <div className="panel-label !mb-2">High-Density Signal</div>
-            <div className="flex flex-wrap gap-1.5">
-              {Array.from({ length: 40 }).map((_, i) => (
-                <div 
-                  key={i} 
-                  className="w-2.5 h-2.5 rounded-sm bg-accent transition-all duration-1000"
-                  style={{ opacity: 0.2 + (Math.random() * 0.8) }}
-                />
-              ))}
-            </div>
-            <p className="text-[10px] text-gray-500 mt-2 font-medium">
-              Pure diagnostic data. Schema definitions are hoisted once.
-            </p>
-          </div>
-        </div>
-
-        {/* Sidebar Cell / Analysis */}
-        <div className={`cell ${activeTab !== 'insights' ? 'hidden lg:flex' : 'flex'}`}>
-          <div className="panel-label">Token Analysis</div>
-          
-          <div className="space-y-3 md:space-y-4 mb-6 md:mb-8">
-            <div className="grid grid-cols-2 lg:grid-cols-1 gap-3">
-              <div className="p-3 md:p-4 border border-border rounded-lg bg-white shadow-sm">
-                <div className="text-[10px] md:text-[11px] text-gray-500 font-bold uppercase mb-1">JSON Tokens</div>
-                <div className="text-xl md:text-2xl font-bold font-mono text-danger tracking-tight">{stats.jsonTokens}</div>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-full min-h-0">
+          {/* JSON Input Panel */}
+          <div className={`lg:col-span-4 flex flex-col gap-4 ${activeTab !== 'input' ? 'hidden lg:flex' : 'flex'}`}>
+            <section className="panel-card flex-grow h-full min-h-[400px]">
+              <div className="panel-header">
+                <div className="panel-label">
+                  <Terminal className="w-3.5 h-3.5" />
+                  JSON SOURCE
+                </div>
+                <div className="flex items-center gap-2">
+                  <label className="p-1.5 rounded-lg hover:bg-slate-200/50 cursor-pointer transition-colors text-slate-500">
+                    <Upload className="w-4 h-4" />
+                    <input type="file" className="hidden" accept=".json" onChange={handleFileUpload} />
+                  </label>
+                  <button 
+                    onClick={() => setJsonInput('')}
+                    className="p-1.5 rounded-lg hover:bg-red-50 cursor-pointer transition-colors text-slate-500 hover:text-red-500"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                  <div className="px-2 py-0.5 bg-slate-100 rounded text-[10px] font-mono font-bold text-slate-400">
+                    {jsonInput.length || 0} CH
+                  </div>
+                </div>
               </div>
               
-              <div className="p-3 md:p-4 border border-border rounded-lg bg-white shadow-sm">
-                <div className="text-[10px] md:text-[11px] text-gray-500 font-bold uppercase mb-1">TOON Tokens</div>
-                <div className="text-xl md:text-2xl font-bold font-mono text-accent tracking-tight">{stats.toonTokens}</div>
+              <div className="p-4 flex gap-2 overflow-x-auto scrollbar-hide shrink-0 border-b border-border/50 bg-slate-50/30">
+                {SAMPLE_DATASETS.map((set) => (
+                  <button
+                    key={set.name}
+                    onClick={() => handleSampleClick(set.data)}
+                    className="px-3 py-1.5 bg-white border border-border rounded-lg text-[10px] font-bold uppercase tracking-wider text-slate-500 hover:border-accent hover:text-accent transition-all whitespace-nowrap shadow-sm active:scale-95"
+                  >
+                    {set.name}
+                  </button>
+                ))}
               </div>
-            </div>
 
-            <div className="p-4 md:p-5 bg-ink text-white rounded-lg border-none shadow-xl shadow-ink/20 transform hover:scale-[1.01] transition-transform">
-              <div className="text-[10px] md:text-[11px] text-gray-400 font-bold uppercase mb-1">Inference Savings</div>
-              <div className="text-2xl md:text-3xl font-bold font-mono text-white mb-2">{stats.reduction}%</div>
-              <div className="h-2 w-full bg-white/10 rounded-full overflow-hidden">
-                <motion.div 
-                  initial={{ width: 0 }}
-                  animate={{ width: `${stats.reduction}%` }}
-                  transition={{ type: 'spring', stiffness: 50, damping: 15 }}
-                  className="h-full bg-accent"
+              <div className="flex-grow p-4 relative min-h-0">
+                <textarea
+                  value={jsonInput}
+                  onChange={(e) => setJsonInput(e.target.value)}
+                  className="w-full h-full p-6 bg-slate-50/50 rounded-xl font-mono text-[13px] leading-relaxed outline-none focus:ring-2 focus:ring-accent/10 border border-slate-100 transition-all resize-none overflow-auto scrollbar-hide text-slate-700"
+                  placeholder="Paste your JSON objects here..."
+                  spellCheck={false}
                 />
               </div>
-            </div>
+            </section>
           </div>
 
-          <div className="flex-grow min-h-[250px] lg:min-h-0">
-            <div className="panel-label">Visual Logic Map</div>
-            <div className="h-48 md:h-64 lg:h-auto lg:max-h-64">
-              <EfficiencyChart jsonTokens={stats.jsonTokens} toonTokens={stats.toonTokens} />
-            </div>
+          {/* TOON Output Panel */}
+          <div className={`lg:col-span-5 flex flex-col ${activeTab !== 'output' ? 'hidden lg:flex' : 'flex'}`}>
+            <section className="panel-card flex-grow h-full min-h-[400px]">
+              <div className="panel-header">
+                <div className="panel-label">
+                  <Cpu className="w-3.5 h-3.5" />
+                  TOON OPTIMIZED
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5 mr-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
+                    <span className="text-[10px] font-bold text-accent uppercase font-mono tracking-wider">PROCESSED</span>
+                  </div>
+                  <div className="px-2 py-0.5 bg-accent/10 rounded text-[10px] font-mono font-bold text-accent">
+                    {toonOutput.length || 0} CH
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex-grow p-4 overflow-hidden flex flex-col min-h-0">
+                <VisualComparison json={jsonInput} toon={toonOutput} isDashboard />
+              </div>
+
+              <div className="p-5 border-t border-border bg-slate-50/50 shrink-0">
+                <div className="panel-label !mb-3">
+                  High-Density Signal Visualization
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {Array.from({ length: 28 }).map((_, i) => (
+                    <motion.div 
+                      key={i}
+                      initial={{ scale: 0.8, opacity: 0.3 }}
+                      animate={{ 
+                        scale: [0.8, 1.1, 0.9, 1], 
+                        opacity: [0.3, 0.8, 0.5, 0.6],
+                        backgroundColor: i < (stats.reduction / 100 * 28) ? '#10B981' : '#E2E8F0'
+                      }}
+                      transition={{ duration: 2, repeat: Infinity, delay: i * 0.05 }}
+                      className="w-2.5 h-2.5 rounded-full"
+                    />
+                  ))}
+                </div>
+                <p className="mt-3 text-[10px] text-slate-400 font-medium">Diagnostic: Redundant structural markers removed. Token budget reclaimed.</p>
+              </div>
+            </section>
           </div>
 
-          <div className="mt-4 pt-4 lg:pt-6 border-t border-border lg:block hidden">
-            <div className="panel-label">LLM Advantages</div>
-            <ul className="space-y-2 text-[10px] md:text-[11px] font-medium text-slate-600">
-              <li className="flex items-center gap-2">
-                <div className="w-1 h-1 bg-accent rounded-full" /> Reduces KV cache pressure
-              </li>
-              <li className="flex items-center gap-2">
-                <div className="w-1 h-1 bg-accent rounded-full" /> Faster TTFT (Generation Speed)
-              </li>
-              <li className="flex items-center gap-2">
-                <div className="w-1 h-1 bg-accent rounded-full" /> Lower API cost per request
-              </li>
-              <li className="flex items-center gap-2">
-                <div className="w-1 h-1 bg-accent rounded-full" /> Less noise for Attention logic
-              </li>
-            </ul>
+          {/* Insights / Stats Panel */}
+          <div className={`lg:col-span-3 flex flex-col gap-6 ${activeTab !== 'insights' ? 'hidden lg:flex' : 'flex'}`}>
+            {/* Main Stats Card */}
+            <section className="relative overflow-hidden p-6 rounded-2xl bg-ink text-white shadow-2xl shadow-ink/30 shrink-0 border border-white/5">
+              <div className="relative z-10">
+                <div className="text-[10px] font-black uppercase tracking-[0.2em] text-accent/80 mb-6">Efficiency Matrix</div>
+                
+                <div className="grid grid-cols-2 gap-6 mb-8">
+                  <div>
+                    <div className="text-[10px] text-slate-400 font-bold uppercase mb-1">JSON Tokens</div>
+                    <div className="text-3xl font-mono font-bold text-danger leading-none">{stats.jsonTokens}</div>
+                  </div>
+                  <div>
+                    <div className="text-[10px] text-slate-400 font-bold uppercase mb-1">TOON Tokens</div>
+                    <div className="text-3xl font-mono font-bold text-accent leading-none">{stats.toonTokens}</div>
+                  </div>
+                </div>
+
+                <div className="mb-2 flex items-end justify-between">
+                  <div className="text-5xl font-mono font-bold text-white tracking-tighter flex items-baseline">
+                    {stats.reduction}<span className="text-accent text-2xl ml-1">%</span>
+                  </div>
+                  <div className="text-right pb-1">
+                    <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none">SAVINGS</div>
+                    <div className="text-[10px] font-bold text-accent uppercase leading-none">REAL-TIME</div>
+                  </div>
+                </div>
+
+                <div className="h-2.5 w-full bg-white/5 rounded-full overflow-hidden border border-white/10">
+                  <motion.div 
+                    initial={{ width: 0 }}
+                    animate={{ width: `${stats.reduction}%` }}
+                    transition={{ type: 'spring', stiffness: 40, damping: 20 }}
+                    className="h-full bg-gradient-to-r from-accent/50 to-accent"
+                  />
+                </div>
+              </div>
+              
+              {/* Background Decor */}
+              <div className="absolute -right-20 -bottom-20 w-64 h-64 bg-accent/5 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-2xl pointer-events-none" />
+            </section>
+
+            {/* Chart Card */}
+            <section className="panel-card flex-grow shadow-md min-h-[300px]">
+              <div className="panel-header">
+                <div className="panel-label">
+                  <BarChart3 className="w-3.5 h-3.5" />
+                  TOKEN DISTRIBUTION
+                </div>
+              </div>
+              <div className="p-6 flex-grow flex items-center justify-center min-h-[250px]">
+                <EfficiencyChart jsonTokens={stats.jsonTokens} toonTokens={stats.toonTokens} />
+              </div>
+            </section>
+
+            {/* Small Advantages List */}
+            <section className="panel-card p-6 bg-slate-50 border-dashed border-slate-300 shadow-none hidden lg:block shrink-0">
+              <div className="panel-label !mb-4">Transformer Specifics</div>
+              <ul className="space-y-3">
+                {[
+                  { icon: 'KV', text: 'Reduces KV Cache Memory pressure' },
+                  { icon: 'TT', text: 'Faster Time-to-First-Token in inference' },
+                  { icon: '$$', text: 'Direct cost reduction for deep context' },
+                  { icon: 'AT', text: 'Lower attention dispersion on keys' }
+                ].map((item, idx) => (
+                  <li key={idx} className="flex items-start gap-3">
+                    <div className="text-[8px] font-black bg-white border border-border rounded px-1 py-0.5 text-slate-400 min-w-[20px] text-center mt-0.5 shrink-0 uppercase tracking-tighter">
+                      {item.icon}
+                    </div>
+                    <span className="text-[11px] font-semibold text-slate-600 leading-snug">{item.text}</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
           </div>
         </div>
+      </main>
 
-        {/* Info/Educate Row */}
-        <div className="cell col-span-1 lg:col-span-3 flex-col lg:flex-row gap-8 md:gap-12 bg-ink text-white py-8 md:py-10 px-6 md:px-12 border-t border-white/5 order-last lg:order-none">
-          <div className="max-w-md w-full">
-            <div className="panel-label !text-accent !mb-2 opacity-100">Educational Context</div>
-            <p className="text-[11px] md:text-[12px] opacity-70 leading-relaxed font-medium">
-              Large Language Models process text as discrete numeric representations. Format overhead in JSON forces the model to attend to repeated structural markers. TOON extracts schema logic once, allowing the model to focus purely on relevant data variation.
+      {/* Footer / Educational Section */}
+      <footer className="bg-ink p-8 md:p-12 mt-auto border-t border-white/5 overflow-hidden relative text-white">
+        <div className="max-w-[1600px] mx-auto relative z-10 flex flex-col lg:flex-row gap-12 lg:gap-24">
+          <div className="max-w-md">
+            <div className="panel-label !text-accent !mb-4 opacity-100 flex items-center gap-2">
+              <div className="w-1 h-1 bg-accent rounded-full" />
+              The Architecture of Efficiency
+            </div>
+            <h2 className="text-xl md:text-2xl font-bold text-white mb-4 tracking-tight">Structured for Machines,<br/>Readable for Humans.</h2>
+            <p className="text-sm text-slate-400 leading-relaxed font-medium">
+              TOON solves the "Structural Noise" problem in modern LLM systems. By hoisting schema definitions and using row-based data normalization, we allow models to attend to what matters: <span className="text-accent underline underline-offset-4 decoration-accent/30">Your Data.</span>
             </p>
           </div>
-          
-          <div className="flex-grow grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 pb-4 lg:pb-0">
+
+          <div className="flex-grow grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-x-12 gap-y-8">
             <EducationalSection isDashboard />
           </div>
-
-          <div className="hidden lg:flex flex-col justify-end text-right">
-             <div className="font-mono text-[10px] opacity-30 leading-tight">
-               ARCH: TRANSFORMER-OPTIMIZED<br/>
-               VER: 2026.05.03<br/>
-               ENV: PROD-STABLE
-             </div>
-          </div>
         </div>
-      </div>
+
+        {/* Global Metadata */}
+        <div className="max-w-[1600px] mx-auto mt-12 pt-12 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-4 text-slate-500 font-mono text-[10px] font-bold tracking-widest uppercase">
+          <div className="flex items-center gap-8 text-[9px] md:text-[10px]">
+            <div>NODE: ALPHA-SECURE</div>
+            <div>SPEC: V1.2.0-STABLE</div>
+            <div>LATENCY: 0.12ms</div>
+          </div>
+          <div className="opacity-50 text-[8px] md:text-[10px]">© 2026 TOON SYSTEMS // TRANSFORMER-OPTIMIZED</div>
+        </div>
+        
+        {/* Subtle decorative elements */}
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-accent/5 rounded-full blur-[120px] -mr-64 -mt-64" />
+      </footer>
     </div>
   );
 }

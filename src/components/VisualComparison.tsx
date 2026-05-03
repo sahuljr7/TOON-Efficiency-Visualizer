@@ -1,7 +1,5 @@
-import { useMemo } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { Copy, Check } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { Database } from 'lucide-react';
 
 interface VisualComparisonProps {
   json: string;
@@ -9,107 +7,75 @@ interface VisualComparisonProps {
   isDashboard?: boolean;
 }
 
-export default function VisualComparison({ json, toon, isDashboard }: VisualComparisonProps) {
-  const [copied, setCopied] = useState<'json' | 'toon' | null>(null);
-
-  const copyToClipboard = (text: string, type: 'json' | 'toon') => {
-    navigator.clipboard.writeText(text);
-    setCopied(type);
-    setTimeout(() => setCopied(null), 2000);
-  };
-
-  // Logic to highlight "redundant" parts in JSON
-  const highlightedJson = useMemo(() => {
-    try {
-      const parsed = JSON.parse(json);
-      let result = JSON.stringify(parsed, null, 2);
-      
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        const keys = Object.keys(parsed[0]);
-        keys.forEach(key => {
-          const keyRegex = new RegExp(`"${key}":`, 'g');
-          result = result.replace(keyRegex, `<span class="text-purple-500">"${key}":</span>`);
-        });
-      }
-
-      // Highlight structure
-      result = result.replace(/[{}[\]]/g, (match) => `<span class="text-slate-400 opacity-60">${match}</span>`);
-      result = result.replace(/:\s*([^,\n}]+)/g, (match, p1) => `: <span class="text-emerald-600">${p1}</span>`);
-      
-      return result;
-    } catch {
-      return json;
-    }
-  }, [json]);
-
-  // Logic to highlight "efficient" parts in TOON
-  const highlightedToon = useMemo(() => {
-    if (!toon) return "";
-    const lines = toon.split('\n');
-    if (lines.length === 0) return "";
-
-    const header = lines[0];
-    const rest = lines.slice(1);
-
-    const headerHtml = `<span class="text-blue-600 font-bold">${header}</span>`;
-    const dataHtml = rest.map(line => `<div class="toon-row py-1 border-b border-border/50">${line}</div>`).join('');
-
-    return headerHtml + '\n' + dataHtml;
-  }, [toon]);
-
+export default function VisualComparison({ toon, isDashboard }: VisualComparisonProps) {
   if (isDashboard) {
+    if (!toon) {
+      return (
+        <div className="flex-grow flex flex-col items-center justify-center text-slate-300 gap-4 opacity-50 bg-white rounded-xl border border-border shadow-inner min-h-[300px]">
+          <Database className="w-12 h-12 stroke-[1]" />
+          <p className="text-xs font-bold uppercase tracking-[0.2em]">Awaiting Source Logic</p>
+        </div>
+      );
+    }
+
     return (
-      <div className="flex-grow overflow-auto bg-white border border-border rounded-md shadow-sm font-mono text-[12px] leading-relaxed p-4">
-        <div className="whitespace-pre" dangerouslySetInnerHTML={{ __html: highlightedToon || "Awaiting input..." }} />
+      <div className="flex-grow flex flex-col min-h-0 bg-white rounded-xl border border-border shadow-inner overflow-hidden">
+        <div className="bg-slate-50 px-4 py-2 border-b border-border flex items-center justify-between">
+          <div className="flex gap-1.5">
+            <div className="w-2 h-2 rounded-full bg-slate-300" />
+            <div className="w-2 h-2 rounded-full bg-slate-300" />
+            <div className="w-2 h-2 rounded-full bg-slate-300" />
+          </div>
+          <span className="text-[10px] font-mono text-slate-400 font-bold uppercase tracking-widest">NORMALIZED_VIEW</span>
+        </div>
+        <div className="flex-grow overflow-auto p-4 md:p-6 font-mono text-[11px] md:text-[13px] leading-relaxed scrollbar-hide">
+          {toon.split('\n').map((line, i) => {
+            if (line.includes('[') && line.includes(']{')) {
+              // Schema line
+              const [nameWithCount, keys] = line.split('{');
+              const name = nameWithCount.split('[')[0];
+              const count = nameWithCount.match(/\[(.*?)\]/)?.[1] || '';
+              
+              return (
+                <div key={i} className="mb-4 bg-accent/5 -mx-6 px-6 py-3 border-y border-accent/10 group bg-grid-slate-100">
+                  <span className="text-accent font-black">{name}</span>
+                  <span className="text-slate-400">[{count}]</span>
+                  <span className="text-slate-500">{'{'}</span>
+                  <span className="text-slate-600 font-bold uppercase tracking-tighter text-[10px] md:text-[11px]">{keys.replace('}:', '')}</span>
+                  <span className="text-slate-500">{'}'}:</span>
+                </div>
+              );
+            }
+            
+            if (line.trim() === '') return <div key={i} className="h-2" />;
+
+            // Data line
+            return (
+              <div key={i} className="py-1 flex gap-4 hover:bg-slate-50 -mx-6 px-6 transition-colors border-l-2 border-transparent hover:border-accent group items-baseline">
+                <span className="text-slate-300 w-4 text-right select-none font-bold text-[9px] group-hover:text-accent/50">{i + 1}</span>
+                <div className="flex flex-wrap items-center">
+                  {line.split(',').map((val, j) => {
+                    const trimmed = val.trim();
+                    let color = 'text-slate-700';
+                    if (!isNaN(Number(trimmed)) && trimmed !== '') color = 'text-blue-600 font-bold';
+                    if (['true', 'false'].includes(trimmed.toLowerCase())) color = 'text-pink-600 font-bold';
+                    if (trimmed.startsWith('"') || trimmed.length > 20) color = 'text-teal-600';
+                    
+                    return (
+                      <span key={j} className="flex items-center">
+                        <span className={`${color} break-all`}>{val}</span>
+                        {j < line.split(',').length - 1 && <span className="text-slate-300 mx-1">,</span>}
+                      </span>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
     );
   }
 
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
-      {/* JSON Panel */}
-      <div className="flex flex-col space-y-2">
-        <div className="flex justify-between items-center px-4 py-2 bg-gray-100 border border-gray-200 rounded-t-xl border-b-0">
-          <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">JSON (Standard)</span>
-          <button 
-            onClick={() => copyToClipboard(json, 'json')}
-            className="p-1 hover:bg-gray-200 rounded transition-colors"
-          >
-            {copied === 'json' ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4 text-gray-400" />}
-          </button>
-        </div>
-        <div className="relative group">
-          <pre 
-            className="p-6 bg-gray-50 border border-gray-200 rounded-b-xl overflow-x-auto text-[13px] font-mono leading-relaxed h-[400px] whitespace-pre-wrap"
-            dangerouslySetInnerHTML={{ __html: highlightedJson }}
-          />
-          <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-            <span className="px-2 py-1 bg-red-100 text-red-600 text-[10px] rounded font-bold uppercase">Redundancy High</span>
-          </div>
-        </div>
-      </div>
-
-      {/* TOON Panel */}
-      <div className="flex flex-col space-y-2">
-        <div className="flex justify-between items-center px-4 py-2 bg-gray-100 border border-gray-200 rounded-t-xl border-b-0">
-          <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">TOON (Efficient)</span>
-          <button 
-            onClick={() => copyToClipboard(toon, 'toon')}
-            className="p-1 hover:bg-gray-200 rounded transition-colors"
-          >
-            {copied === 'toon' ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4 text-gray-400" />}
-          </button>
-        </div>
-        <div className="relative group">
-          <pre 
-            className="p-6 bg-white border border-gray-200 rounded-b-xl overflow-x-auto text-[13px] font-mono leading-relaxed h-[400px] whitespace-pre-wrap shadow-sm"
-            dangerouslySetInnerHTML={{ __html: highlightedToon }}
-          />
-          <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-            <span className="px-2 py-1 bg-green-100 text-green-600 text-[10px] rounded font-bold uppercase">Optimized</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+  return null;
 }

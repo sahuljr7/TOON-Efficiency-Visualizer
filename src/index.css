@@ -1,40 +1,51 @@
 @import "tailwindcss";
 
 @theme {
-  --color-bg: #F8F9FA;
-  --color-ink: #1A1D21;
+  --color-bg: #F9FAFB;
+  --color-ink: #0F172A;
   --color-accent: #10B981;
+  --color-accent-hover: #059669;
   --color-danger: #EF4444;
   --color-border: #E2E8F0;
+  --color-surface: #FFFFFF;
   
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", "Fira Code", ui-monospace, SFMono-Regular, monospace;
+
+  --shadow-premium: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  --shadow-lg-premium: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
 }
 
 @layer base {
   body {
-    @apply bg-bg text-ink font-sans;
+    @apply bg-bg text-ink font-sans antialiased;
   }
 }
 
-.dashboard-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  min-height: 100vh;
-  gap: 1px;
-  @apply bg-border;
+.dashboard-container {
+  @apply min-h-screen flex flex-col;
 }
 
-@media (min-width: 1024px) {
-  .dashboard-grid {
-    grid-template-columns: 1fr 1fr 320px;
-    grid-template-rows: 64px 1fr auto;
-  }
+.panel-card {
+  @apply bg-surface border border-border rounded-2xl shadow-premium overflow-hidden flex flex-col transition-all duration-200;
 }
 
-.cell {
-  @apply bg-white p-4 md:p-6 overflow-hidden flex flex-col;
+.panel-card-hover {
+  @apply hover:shadow-lg-premium hover:border-slate-300;
+}
+
+.panel-header {
+  @apply px-5 py-4 border-b border-border flex items-center justify-between bg-slate-50/50;
 }
 
 .panel-label {
-  @apply text-[11px] uppercase tracking-widest text-[#64748B] font-semibold mb-3 flex justify-between items-center;
+  @apply text-[11px] uppercase tracking-[0.1em] text-[#64748B] font-bold flex items-center gap-2;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
